@@ -22,9 +22,9 @@ class DocCodeMerger {
   static const nameInParens = r"\(([^)]+)\)";
   static const newline = "\n";
   static const encoding = Encoding.UTF_8;
-  static const indentation = "\t";
+  static String indentation = "\t";
   String scriptName;
-  
+
   /**
    * This is a list of filter rules.
    *
@@ -41,6 +41,7 @@ class DocCodeMerger {
   Directory outputDirectory;
   bool errorsEncountered = false;
   bool deleteFirst = false;
+  bool preserveIndentation = false;
 
   /// Each example has a name and a list of lines.
   Map<String, List<String>> examples;
@@ -82,7 +83,7 @@ class DocCodeMerger {
 
   /**
    * Scan an entire directory for examples and update [examples].
-   * 
+   *
    * Because of the way pub uses symlinks, it's common to see the same file
    * multiple times. Ignore files we've already seen.
    *
@@ -108,7 +109,7 @@ class DocCodeMerger {
     // This is used in a test. It only works if I put it in the lib directory.
     // BEGIN(symlinkExample)
     // 1
-    // END(symlinkExample)  
+    // END(symlinkExample)
   }
 
   /**
@@ -163,6 +164,10 @@ class DocCodeMerger {
       Match match = mergeBlockRegExp.firstMatch(line);
       if (match != null) {
         String exampleName = match[1];
+        if (preserveIndentation) {
+          var block = line.split(mergeBlockRegExp);
+          indentation = block[0];
+        }
         List<String> lines = lookupExample(exampleName,
             filters: filters, print: print);
         for (var line in lines) {
@@ -305,6 +310,9 @@ class DocCodeMerger {
       }
       if (arg == "--delete-first") {
         deleteFirst = true;
+      }
+      if (arg == "--preserve-indentation") {
+        preserveIndentation = true;
       }
       if (!arg.startsWith("-")) {
         positionalArguments.add(arg);
